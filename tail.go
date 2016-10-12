@@ -23,7 +23,7 @@ func getTailArgs() (bool, string) {
 	return isValid, fileName
 }
 
-func readLine(f *os.File)  string {
+func readLineTail(f *os.File)  string {
 	var buffer []byte
 	readBuffer := make([]byte, 1)
 
@@ -59,7 +59,7 @@ func main() {
 		f.Seek(0, os.SEEK_END)
 
 		for true {
-			fmt.Println(readLine(f))
+			fmt.Println(readLineTail(f))
 		}
 	}
 }
