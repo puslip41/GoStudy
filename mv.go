@@ -14,9 +14,9 @@ func checkArgs(args []string) (bool, string, string, string) {
 	argsLen := len(args)
 
 	if argsLen == 1 {
-		fmt.Printf("%s: missing file operand", args[0] )
+		fmt.Println("%s: missing file operand", args[0] )
 	} else if argsLen == 2 {
-		fmt.Printf("%s: missing destination file operand after '%s'", args[0], args[1])
+		fmt.Println("%s: missing destination file operand after '%s'", args[0], args[1])
 	} else if argsLen == 3 {
 		isValid = true
 
@@ -34,13 +34,14 @@ func main() {
 	if isValidArgs {
 		err := os.Link(sourceFileName, destinationFileName)
 		if err != nil {
-			fmt.Printf("%s: cannot stat '%s'", command, sourceFileName)
+			fmt.Println("%s: cannot stat '%s'", command, sourceFileName)
 			os.Exit(-1)
 		}
 
 		err = syscall.Unlink(sourceFileName)
 		if err != nil {
 			fmt.Println("%s: %s", command, err.Error())
+			os.Exit(-1)
 		}
 	}
 }
