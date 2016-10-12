@@ -2,11 +2,34 @@ package main
 
 import (
 	"os"
-	"fmt"
 	"strings"
 )
 
-func readLineTail(f *os.File)  (string, error) {
+func main(){
+	isValidArgs, keyword, fileName := getGrepArgs()
+
+	if isValidArgs {
+		f, err := getInputFile(fileName)
+		if err != nil {
+			println(err.Error())
+		} else {
+			defer f.Close()
+
+			for true {
+				readLine, err := readLineGrep(f)
+				if err != nil {
+					break;
+				} else {
+					if strings.Contains(readLine, keyword) {
+						println(readLine)
+					}
+				}
+			}
+		}
+	}
+}
+
+func readLineGrep(f *os.File)  (string, error) {
 	var buffer []byte
 	readBuffer := make([]byte, 1)
 
@@ -29,61 +52,22 @@ func readLineTail(f *os.File)  (string, error) {
 }
 
 func getInputFile(fileName string) (*os.File, error) {
-	var f *os.File
-	var err error
 	if fileName == "" {
-		f = os.Stdin
+		return os.Stdin, nil
 	} else {
-		f, err = os.Open(fileName)
+		return os.Open(fileName)
 	}
-
-	return f, err
 }
 
 func getGrepArgs() (bool, string, string) {
-	isValid := false
-	argsLen := len(os.Args)
-
-	var keyword, fileName string
-
-	if argsLen == 1 {
-		fmt.Println("%s: missing file operand", os.Args[0] )
-	} else if argsLen == 2 {
-		isValid = true
-
-		keyword = os.Args[1]
-		fileName = ""
-	} else if argsLen == 3 {
-		isValid = true
-
-		keyword = os.Args[1]
-		fileName = os.Args[2]
-	}
-
-	return isValid, keyword, fileName
-}
-
-func main(){
-	isValidArgs, keyword, fileName := getGrepArgs()
-
-	if isValidArgs {
-		f, err := getInputFile(fileName)
-		if err != nil {
-			fmt.Println(err.Error())
-		} else {
-			defer f.Close()
-
-			var readLine string
-			for true {
-				readLine, err = readLineTail(f)
-				if err != nil {
-					break;
-				} else {
-					if strings.Contains(readLine, keyword) {
-						println(readLine)
-					}
-				}
-			}
-		}
+	if len(os.Args) == 1 {
+		println("%s: missing file operand", os.Args[0] )
+		return false, "", ""
+	} else if len(os.Args) == 2 {``
+		return true, os.Args[1], ""
+	} else if len(os.Args) == 3 {
+		return true, os.Args[1], os.Args[2]
+	} else  {
+		return false, "", ""
 	}
 }
