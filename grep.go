@@ -72,7 +72,7 @@ func main(){
 			fmt.Println(err.Error())
 		} else {
 			defer f.Close()
-			
+
 			var readLine string
 			for true {
 				readLine, err = readLineTail(f)
