@@ -6,8 +6,11 @@ import (
 	"io"
 )
 
-func main() {
-	args := os.Args
+func checkArgs(args []string) (bool, string, string, string) {
+	isStart := false
+	var command string
+	var sourceFileName string
+	var destinationFileName string
 
 	if len(args) == 1 {
 		fmt.Printf("%s: missing file operand", args[0] )
@@ -16,19 +19,30 @@ func main() {
 		fmt.Printf("%s: missing destination file operand after '%s'", args[0], args[1])
 		os.Exit(-1)
 	} else if len(args) == 3 {
-		sourceFileName := args[1]
-		destinationFileName := args[2]
+		isStart = true
 
+		command = args[0]
+		sourceFileName = args[1]
+		destinationFileName = args[2]
+	}
+
+	return isStart, command, sourceFileName, destinationFileName
+}
+
+func main() {
+	isStart, command, sourceFileName, destinationFileName := checkArgs(os.Args)
+
+	if isStart {
 		fi, err := os.Open(sourceFileName)
 		if err != nil {
-			fmt.Printf("%s: cannot stat '%s'", args[0], sourceFileName)
+			fmt.Printf("%s: cannot stat '%s'", command, sourceFileName)
 			os.Exit(-1)
 		}
 		defer fi.Close()
 
 		fo, err := os.Create(destinationFileName)
 		if err != nil {
-			fmt.Printf("%s: cannot stat '%s'", args[0], destinationFileName)
+			fmt.Printf("%s: cannot stat '%s'", command, destinationFileName)
 			os.Exit(-1)
 		}
 		defer fo.Close()
@@ -38,7 +52,7 @@ func main() {
 		for {
 			readCount, err := fi.Read(buffer)
 			if err != nil && err != io.EOF {
-				fmt.Printf("%s: cannot copy file: read error '%s'", args[0], sourceFileName)
+				fmt.Printf("%s: cannot copy file: read error '%s'", command, sourceFileName)
 				os.Exit(-1)
 			}
 
@@ -48,7 +62,7 @@ func main() {
 
 			_, err = fo.Write(buffer[:readCount])
 			if err != nil {
-				fmt.Printf("%s: cannot copy file: write error '%s'", args[0], destinationFileName)
+				fmt.Printf("%s: cannot copy file: write error '%s'", command, destinationFileName)
 			}
 		}
 	}
