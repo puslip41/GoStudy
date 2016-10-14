@@ -71,3 +71,8 @@ func getGrepArgs() (bool, string, string) {
 		return false, "", ""
 	}
 }
+
+func printGrepHelp(command string) {
+	println("Usage: %s [KEYWORD] [FILENAME]", command)
+	println("Usage: %s [KEYWORD]", command)
+}
