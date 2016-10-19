@@ -14,7 +14,7 @@ import (
 const MINUTE_FORMAT = "200601021504"
 const SECOND_FORMAT = "20060102150405"
 const UDP_READ_BUFFER_SIZE = 1024*1024*10
-const WRITE_BUFFER_SIZE = 1024*1024
+const WRITE_BUFFER_SIZE = 1024
 
 func main() {
 	port, savePath := getSyslogReceiverArgs()
@@ -68,7 +68,7 @@ func main() {
 				openLogFile(beforeTime)
 			}
 
-			logWriter.WriteFormat("%s|%s|%s%s", currentTime.Format(SECOND_FORMAT), saddr.IP.String(), buffer[:length], getNewLineSymbol() )
+			logWriter.WriteFormat(`%s|%s|%s%s`, currentTime.Format(SECOND_FORMAT), saddr.IP.String(), buffer[:length], getNewLineSymbol() )
 			count++
 		}
 	}
