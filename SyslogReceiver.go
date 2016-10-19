@@ -6,31 +6,42 @@ import (
 	"fmt"
 	"time"
 	"runtime"
+	"bufio"
+
+	"github.com/puslip41/GoStudy/third"
 )
 
 const MINUTE_FORMAT = "200601021504"
 const SECOND_FORMAT = "20060102150405"
+const UDP_READ_BUFFER_SIZE = 1024*1024*10
+const WRITE_BUFFER_SIZE = 1024*1024
 
 func main() {
-	port, savePath := getArgs()
-
-	newlineSymbol := getNewLineSymbol()
+	port, savePath := getSyslogReceiverArgs()
 
 	listener, err := openUdpListener(port)
 	if err != nil {
-		fmt.Println(err.Error())
+		PrintError(err, "cannot open udp port")
 	} else {
 		defer listener.Close()
 
 		count := 0
 		beforeTime := time.Now().Format(MINUTE_FORMAT)
-
 		buffer := make([]byte, 1024)
+		var logWriter *third.LogWriter
 
-		logFile, err := openNewLogFile( savePath, beforeTime )
-		if err != nil {
-			fmt.Println(err.Error())
+		openLogFile := func (fileTime string) { // file close & open
+			if logWriter != nil {
+				logWriter.Close()
+			}
+
+			logWriter, err = openNewLogWriter(savePath, fileTime)
+			if err != nil {
+				PrintError(err, "cannot open log file")
+			}
 		}
+
+		openLogFile(beforeTime)
 
 		go func() { // print receive + write log count per second
 			lastCheckSecond := time.Now().Format(SECOND_FORMAT)
@@ -39,7 +50,7 @@ func main() {
 				currentCheckSecond := time.Now()
 				if lastCheckSecond != currentCheckSecond.Format(SECOND_FORMAT) {
 					lastCheckSecond = currentCheckSecond.Format(SECOND_FORMAT)
-					fmt.Printf("%s receive count : %d%s", currentCheckSecond.Format("2006/01/02 15:04:05"), count, newlineSymbol)
+					fmt.Printf("%s receive count : %d%s", currentCheckSecond.Format("2006/01/02 15:04:05"), count, getNewLineSymbol())
 					count = 0
 				} else {
 					time.Sleep(1)
@@ -49,30 +60,25 @@ func main() {
 
 		for {
 			length, saddr, err := listener.ReadFromUDP(buffer)
-			PrintError(err, "cannot receive message", newlineSymbol)
+			PrintError(err, "cannot receive message")
 			currentTime := time.Now()
 
 			if beforeTime != currentTime.Format(MINUTE_FORMAT) { // change minute log file
 				beforeTime = currentTime.Format(MINUTE_FORMAT)
-				logFile.Close()
-				logFile, err = openNewLogFile(savePath, beforeTime)
-				PrintError(err, "cannot create log file", newlineSymbol)
+				openLogFile(beforeTime)
 			}
 
-			if logFile != nil {
-				logFile.WriteString(fmt.Sprintf("%s|%s|%s%s", currentTime.Format(SECOND_FORMAT), saddr.IP.String(), buffer[:length], newlineSymbol))
-				count++
-			}
+			logWriter.WriteFormat("%s|%s|%s%s", currentTime.Format(SECOND_FORMAT), saddr.IP.String(), buffer[:length], getNewLineSymbol() )
+			count++
 		}
 	}
 
 	fmt.Println(savePath)
 }
 
-
-func PrintError(e error, message, newline string) {
+func PrintError(e error, message string) {
 	if e != nil {
-		fmt.Printf("ERROR: %s%s%s", message, newline, e.Error())
+		fmt.Printf("ERROR: %s%s%s", message, getNewLineSymbol(), e.Error())
 	}
 }
 
@@ -84,13 +90,20 @@ func getNewLineSymbol() string {
 	}
 }
 
-func openNewLogFile(saveDirectory, fileName string) (* os.File, error) {
+func openNewLogWriter(saveDirectory, fileName string) (*third.LogWriter, error ) {
 	newLogFileName := fmt.Sprintf("%s\\%s.log", saveDirectory, fileName)
-	fmt.Println("Open Log File: ", newLogFileName)
-	return os.OpenFile(newLogFileName, os.O_APPEND|os.O_CREATE, 0660)
+
+	file, err := os.OpenFile(newLogFileName, os.O_APPEND|os.O_CREATE, 0660)
+	if err != nil {
+		return nil, err
+	}
+
+	writer := bufio.NewWriterSize(file, WRITE_BUFFER_SIZE)
+
+	return &(third.LogWriter{File: file, Writer: writer}), nil
 }
 
-func getArgs() (port string, savePath string) {
+func getSyslogReceiverArgs() (port string, savePath string) {
 	if len(os.Args) > 1 {
 		port = os.Args[1]
 	} else {
@@ -112,5 +125,15 @@ func openUdpListener(port string) (*net.UDPConn, error) {
 		return nil, err
 	}
 
-	return net.ListenUDP("udp", addr)
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.SetReadBuffer(UDP_READ_BUFFER_SIZE)
+	if err != nil {
+		PrintError(err, "cannot setup udp read buffer size")
+	}
+
+	return conn, nil
 }
