@@ -12,7 +12,7 @@ type LogWriter struct {
 }
 
 func (writer *LogWriter) WriteFormat(format string, args ...interface{}) {
-	writer.Writer.WriteString(fmt.Sprintf(format, args))
+	writer.Writer.WriteString(fmt.Sprintf(format, args...))
 }
 
 func (writer *LogWriter) Flush() {
