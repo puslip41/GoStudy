@@ -49,9 +49,12 @@ func main() {
 
 		for {
 			readCount, err := fi.Read(buffer)
-			if err != nil && err != io.EOF {
-				fmt.Println("%s: cannot copy file: read error '%s'", command, sourceFileName)
-				os.Exit(-1)
+			if err != nil {
+				if err == io.EOF {
+					break
+				} else {
+					fmt.Println("%s: cannot copy file: read error '%s'", command, sourceFileName)
+				}
 			}
 
 			if readCount == 0 {
