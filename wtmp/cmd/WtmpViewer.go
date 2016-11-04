@@ -7,11 +7,15 @@ import (
 	"fmt"
 	"errors"
 	"github.com/puslip41/GoStudy/wtmp"
+	"time"
 )
 
 
 func main() {
-	filename, isTailing, err := getExecuteArguments()
+	command, filename, isTailing, err := getExecuteArguments()
+	if err != nil {
+		printCommandUsage()
+	}
 
 	file, err := os.OpenFile(filename, os.O_RDONLY, os.FileMode(644))
 	if err != nil {
@@ -24,34 +28,38 @@ func main() {
 	utmp := wtmp.Utmp{}
 
 	if isTailing {
+		file.Seek(os.SEEK_END, -1 * len(b) * 5)
+	}
 
-	} else {
-		for {
-			if _, err := file.Read(b); err != nil {
-				if err == io.EOF {
+	for {
+		if _, err := file.Read(b); err != nil {
+			if err == io.EOF {
+				if isTailing {
+					time.Sleep(100)
+				} else {
 					log.Println("End File Read")
 					break;
 				}
-				log.Println(err)
 			} else {
-				if err := wtmp.Unmashal(b, &utmp); err != nil {
-					fmt.Println(err)
-				} else {
-					fmt.Println(utmp.String())
-				}
+				log.Println(err)
+			}
+		} else {
+			if err := wtmp.Unmashal(b, &utmp); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(utmp.String())
 			}
 		}
 	}
-
-
 
 }
 
 func getExecuteArguments() (string, bool, error) {
 	isTailing := false
-	//filename := "/var/log/wtmp"
-	filename := `D:\SourceCode\Go\src\github.com\puslip41\GoStudy\wtmp\cmd\wtmp`
+	filename := "/var/log/wtmp"
+	//filename := `D:\SourceCode\Go\src\github.com\puslip41\GoStudy\wtmp\cmd\wtmp`
 	var err error
+	command := os.Args[0]
 
 	switch len(os.Args) {
 
@@ -70,7 +78,14 @@ func getExecuteArguments() (string, bool, error) {
 
 	default:
 		err = errors.New("Invalid Arguments")
+		break
 	}
 
-	return filename, isTailing, err
+	return command, filename, isTailing, err
+}
+
+func printCommandUsage(command string) {
+	fmt.Printf("Usage: %s            print /var/log/wtmp\n", command)
+	fmt.Printf("   or: %s [FILE]     print specified file\n", command)
+	fmt.Printf("   or: %s -t [FILE]  print appended log as the file grows\n", command)
 }
