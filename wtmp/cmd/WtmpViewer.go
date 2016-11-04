@@ -14,7 +14,7 @@ import (
 func main() {
 	command, filename, isTailing, err := getExecuteArguments()
 	if err != nil {
-		printCommandUsage()
+		printCommandUsage(command)
 	}
 
 	file, err := os.OpenFile(filename, os.O_RDONLY, os.FileMode(644))
@@ -28,7 +28,7 @@ func main() {
 	utmp := wtmp.Utmp{}
 
 	if isTailing {
-		file.Seek(os.SEEK_END, -1 * len(b) * 5)
+		file.Seek(int64(-1 * len(b) * 5), os.SEEK_END)
 	}
 
 	for {
@@ -54,7 +54,7 @@ func main() {
 
 }
 
-func getExecuteArguments() (string, bool, error) {
+func getExecuteArguments() (string, string, bool, error) {
 	isTailing := false
 	filename := "/var/log/wtmp"
 	//filename := `D:\SourceCode\Go\src\github.com\puslip41\GoStudy\wtmp\cmd\wtmp`
