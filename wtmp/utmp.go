@@ -9,23 +9,6 @@ import (
 	"net"
 )
 
-const (
-	UT_UNKNOWN=0
-	RUN_LVL=1
-	BOOT_TIME=2
-	NEW_TIME=3
-	OLD_TIME=4
-	INIT_PROCESS=5
-	LOGIN_PROCESS=6
-	USER_PROCESS=7
-	DEAD_PROCESS=8
-	ACCOUNTING=9
-
-	UT_LINESIZE=32
-	UT_NAMESIZE=32
-	UT_HOSTSIZE=256
-)
-
 type ExitStatus struct {
 	ETermination uint16
 	EExit        uint16
@@ -90,8 +73,7 @@ func (utmp *Utmp) String() string {
 		utmp.UtExit.EExit,
 		time.Unix(int64(utmp.UtTv.TvSec), int64(utmp.UtTv.TvUsec)).Format("20060102150405"),
 		utmp.UtSession,
-		//net.IP(bytes.Trim(utmp.UtAddrV6, "\x00")).String(),
-		net.IP(utmp.UtAddrV6).String(),
+		net.IP(bytes.Trim(utmp.UtAddrV6, "\x00")).String(),
 	)
 }
 
