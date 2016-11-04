@@ -90,7 +90,8 @@ func (utmp *Utmp) String() string {
 		utmp.UtExit.EExit,
 		time.Unix(int64(utmp.UtTv.TvSec), int64(utmp.UtTv.TvUsec)).Format("20060102150405"),
 		utmp.UtSession,
-		net.IP(bytes.Trim(utmp.UtAddrV6, "\x00")).String(),
+		//net.IP(bytes.Trim(utmp.UtAddrV6, "\x00")).String(),
+		net.IP(utmp.UtAddrV6).String(),
 	)
 }
 

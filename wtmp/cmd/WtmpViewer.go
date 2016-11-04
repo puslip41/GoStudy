@@ -64,7 +64,11 @@ func getExecuteArguments() (string, string, bool, error) {
 	switch len(os.Args) {
 
 	case 2:
-		filename = os.Args[1]
+		if os.Args[1] == "-t" {
+			isTailing = true
+		} else {
+			filename = os.Args[1]
+		}
 		break
 
 	case 3:
