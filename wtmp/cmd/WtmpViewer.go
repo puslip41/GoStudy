@@ -15,6 +15,7 @@ func main() {
 	command, filename, isTailing, err := getExecuteArguments()
 	if err != nil {
 		printCommandUsage(command)
+		os.Exit(0)
 	}
 
 	file, err := os.OpenFile(filename, os.O_RDONLY, os.FileMode(644))
@@ -37,7 +38,6 @@ func main() {
 				if isTailing {
 					time.Sleep(100)
 				} else {
-					log.Println("End File Read")
 					break;
 				}
 			} else {
